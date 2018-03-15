@@ -22,35 +22,45 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.apache.commons.lang.time.DurationFormatUtils;
 import org.clarent.ivyidea.intellij.IntellijUtils;
 import org.clarent.ivyidea.intellij.facet.config.IvyIdeaFacetConfiguration;
 import org.clarent.ivyidea.intellij.model.IntellijModuleWrapper;
-import org.clarent.ivyidea.resolve.dependency.ResolvedDependency;
 import org.clarent.ivyidea.resolve.problem.ResolveProblem;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 /**
  * @author Guy Mahieu
  */
 public abstract class AbstractResolveAction extends AnAction {
 
-    protected void updateIntellijModel(final Module module, final List<ResolvedDependency> dependencies) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    public void run() {
-                        final IntellijModuleWrapper moduleWrapper = IntellijModuleWrapper.forModule(module);
-                        try {
-                            moduleWrapper.updateDependencies(dependencies);
-                        } finally {
-                            moduleWrapper.close();
-                        }
-                    }
-                });
+    protected void updateIntellijModel(final DependencyResolutionPackage... packages) {
+        Semaphore semaphore = new Semaphore(2);
+        for (DependencyResolutionPackage drp : packages) {
+            try {
+                semaphore.acquire(1);
+            } catch (InterruptedException e) {
+                return;
             }
-        });
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                        public void run() {
+                            final IntellijModuleWrapper moduleWrapper = IntellijModuleWrapper.forModule(drp.getModule());
+                            try {
+                                moduleWrapper.updateDependencies(drp.getDependencies());
+                            } finally {
+                                moduleWrapper.close();
+                            }
+                            semaphore.release();
+                        }
+                    });
+                }
+            });
+        }
     }
 
     protected void clearConsole(final Project project) {
@@ -80,9 +90,7 @@ public abstract class AbstractResolveAction extends AnAction {
                 } else {
                     configsForModule = "[All configurations]";
                 }
-                if (problems.isEmpty()) {
-                    consoleView.print("No problems detected during resolve for module '" + module.getName() + "' " + configsForModule + ".\n", ConsoleViewContentType.NORMAL_OUTPUT);
-                } else {
+                if (!problems.isEmpty()) {
                     consoleView.print("Problems for module '" + module.getName() + " " + configsForModule + "':" + '\n', ConsoleViewContentType.NORMAL_OUTPUT);
                     for (ResolveProblem resolveProblem : problems) {
                         consoleView.print("\t" + resolveProblem.toString() + '\n', ConsoleViewContentType.ERROR_OUTPUT);
@@ -92,6 +100,14 @@ public abstract class AbstractResolveAction extends AnAction {
                 }
             }
         });
+    }
+
+    protected String getDurationText(long startNanos, long stopNanos){
+        return getDurationText(stopNanos - startNanos );
+    }
+
+    protected String getDurationText(long durationNanos){
+        return DurationFormatUtils.formatDurationHMS((durationNanos) / 1000000);
     }
 }
 

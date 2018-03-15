@@ -16,6 +16,8 @@
 
 package org.clarent.ivyidea;
 
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -23,17 +25,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import org.apache.ivy.Ivy;
+import org.apache.ivy.core.module.id.ModuleId;
 import org.clarent.ivyidea.exception.IvyFileReadException;
 import org.clarent.ivyidea.exception.IvySettingsFileReadException;
 import org.clarent.ivyidea.exception.IvySettingsNotFoundException;
 import org.clarent.ivyidea.intellij.IntellijUtils;
 import org.clarent.ivyidea.intellij.task.IvyIdeaResolveBackgroundTask;
 import org.clarent.ivyidea.ivy.IvyManager;
-import org.clarent.ivyidea.resolve.IntellijDependencyResolver;
+import org.clarent.ivyidea.resolve.DependencyResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * Action to resolve the dependencies for all modules that have an IvyIDEA facet configured.
@@ -48,30 +52,54 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
         final Project project = DataKeys.PROJECT.getData(e.getDataContext());
         ProgressManager.getInstance().run(new IvyIdeaResolveBackgroundTask(project, e) {
             public void doResolve(final @NotNull ProgressIndicator indicator) throws IvySettingsNotFoundException, IvyFileReadException, IvySettingsFileReadException {
-                clearConsole(myProject);
+                ConsoleView consoleView = IntellijUtils.getConsoleView(project);
+                consoleView.clear();
+                consoleView.print("Initializing Ivy settings\n", ConsoleViewContentType.NORMAL_OUTPUT);
 
                 final IvyManager ivyManager = new IvyManager();
+                final DependencyResolver resolver = new DependencyResolver(ivyManager);
+                final long startTime = System.nanoTime();
+                long resolveTime = 0;
+                long processingTime = 0;
+                Module[] allModulesWithIvyIdeaFacet = IntellijUtils.getAllModulesWithIvyIdeaFacet(project);
+                HashMap<ModuleId, Module> moduleMap = new HashMap<>();
+                ArrayList<DependencyResolutionPackage> packages = new ArrayList<>();
+                for (final Module module : allModulesWithIvyIdeaFacet){
+                    moduleMap.put(ivyManager.getModuleDescriptor(module).getModuleRevisionId().getModuleId(), module);
+                }
 
-                Collection<IntellijDependencyResolver> resolvers = new ArrayList<IntellijDependencyResolver>();
-                for (final Module module : IntellijUtils.getAllModulesWithIvyIdeaFacet(project)) {
-                    getProgressMonitorThread().setIvy(ivyManager.getIvy(module));
+                for (int i = 0; i < allModulesWithIvyIdeaFacet.length; i++) {
+                    Module module = allModulesWithIvyIdeaFacet[i];
+                    indicator.setFraction(((double)i) / allModulesWithIvyIdeaFacet.length);
+                    indicator.setText("Resolve for all modules ("+(i+1)+"/"+allModulesWithIvyIdeaFacet.length+")");
+
+                    Ivy ivy = ivyManager.getIvy(module);
+                    getProgressMonitorThread().setIvy(ivy);
+                    indicator.setText("Resolve for all modules ("+(i+1)+"/"+allModulesWithIvyIdeaFacet.length+")");
                     indicator.setText2("Resolving for module " + module.getName());
-                    final IntellijDependencyResolver resolver = new IntellijDependencyResolver(ivyManager);
-                    resolver.resolve(module);
-                    resolvers.add(resolver);
 
+                    DependencyResolutionPackage resolve = resolver.resolve(ivy, module, moduleMap);
+                    packages.add(resolve);
+                    consoleView.print("(" + (i+1) + "/" + allModulesWithIvyIdeaFacet.length + ") Resolved dependencies for " + module.getName() + ". " +
+                                      "Resolve time: " + getDurationText(resolve.getResolveTime()) + ", " +
+                                      "Processing time: " + getDurationText(resolve.getExtractDependenciesTime()) + "\n",
+                                        ConsoleViewContentType.NORMAL_OUTPUT);
+                    resolveTime += resolve.getResolveTime();
+                    processingTime += resolve.getExtractDependenciesTime();
+                    reportProblems(module, resolve.getProblems());
                     if (indicator.isCanceled()) {
                         return;
                     }
                 }
-
-                for (IntellijDependencyResolver resolver : resolvers) {
-                    Module module = resolver.getModule();
-                    updateIntellijModel(module, resolver.getDependencies());
-                    reportProblems(module, resolver.getProblems());
-                }
+                indicator.setText("Updating IntelliJ modules with resolved dependencies");
+                indicator.setText2("");
+                indicator.setIndeterminate(true);
+                updateIntellijModel(packages.toArray(new DependencyResolutionPackage[packages.size()]));
+                consoleView.print("Finished resolving modules. \n" +
+                                  "Total time spent resolving: " + getDurationText(resolveTime) + "\n" +
+                                  "Total time spent processing: " + getDurationText(processingTime) + "\n" +
+                                  "Total time: " + getDurationText(startTime, System.nanoTime()) + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
             }
         });
     }
-
 }
