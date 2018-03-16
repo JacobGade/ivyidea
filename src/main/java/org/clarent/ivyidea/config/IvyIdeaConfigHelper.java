@@ -53,7 +53,7 @@ import java.util.*;
 public class IvyIdeaConfigHelper {
 
     private static final String RESOLVED_LIB_NAME_ROOT = "IvyIDEA";
-
+    private static final HashMap<String,IvySettings> settingsMap = new HashMap<>();
     public static String getCreatedLibraryName(final ModifiableRootModel model, final String configName) {
         final Project project = model.getProject();
         String libraryName = RESOLVED_LIB_NAME_ROOT;
@@ -239,6 +239,9 @@ public class IvyIdeaConfigHelper {
 
     @NotNull
     public static IvySettings createConfiguredIvySettings(Module module, @Nullable String settingsFile, Properties properties) throws IvySettingsNotFoundException, IvySettingsFileReadException {
+        String settingsKey = settingsFile + properties.hashCode();
+        if(settingsMap.containsKey(settingsKey))
+            return settingsMap.get(settingsKey);
         IvySettings s = new IvySettings();
         injectProperties(s, module, properties); // inject our properties; they may be needed to parse the settings file
 
@@ -270,7 +273,7 @@ public class IvyIdeaConfigHelper {
             s.setVariable(key, null);
             s.setVariable(key, value);
         }
-
+        settingsMap.put(settingsKey, s);
         return s;
     }
 

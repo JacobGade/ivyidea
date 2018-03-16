@@ -37,12 +37,14 @@ public class IvyManager {
 
     private Map<Module, Ivy> configuredIvyInstances = new HashMap<Module, Ivy>();
     private Map<Module, ModuleDescriptor> moduleDescriptors = new HashMap<Module, ModuleDescriptor>();
-
+    private Map<IvySettings, Ivy> ivyMap = new HashMap<>();
     public Ivy getIvy(final Module module) throws IvySettingsNotFoundException, IvySettingsFileReadException {
         if (!configuredIvyInstances.containsKey(module)) {
             final IvySettings configuredIvySettings = IvyIdeaConfigHelper.createConfiguredIvySettings(module);
+            if(ivyMap.containsKey(configuredIvySettings))
+                return ivyMap.get(configuredIvySettings);
             final Ivy ivy = IvyUtil.createConfiguredIvyEngine(module, configuredIvySettings);
-
+            ivyMap.put(configuredIvySettings, ivy);
             configuredIvyInstances.put(module, ivy);
         }
         return configuredIvyInstances.get(module);
