@@ -38,66 +38,46 @@ import java.util.concurrent.Semaphore;
 public abstract class AbstractResolveAction extends AnAction {
 
     protected void updateIntellijModel(final DependencyResolutionPackage... packages) {
-        Semaphore semaphore = new Semaphore(2);
         for (DependencyResolutionPackage drp : packages) {
-            try {
-                semaphore.acquire(1);
-            } catch (InterruptedException e) {
-                return;
-            }
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                        public void run() {
-                            final IntellijModuleWrapper moduleWrapper = IntellijModuleWrapper.forModule(drp.getModule());
-                            try {
-                                moduleWrapper.updateDependencies(drp.getDependencies());
-                            } finally {
-                                moduleWrapper.close();
-                            }
-                            semaphore.release();
-                        }
-                    });
-                }
-            });
+            ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication()
+                                                                                      .runWriteAction(() -> {
+                                                                                          try (IntellijModuleWrapper moduleWrapper = IntellijModuleWrapper
+                                                                                                  .forModule(drp.getModule())) {
+                                                                                              moduleWrapper.updateDependencies(drp.getDependencies());
+                                                                                          }
+                                                                                      }));
         }
     }
 
     protected void clearConsole(final Project project) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-                IntellijUtils.getConsoleView(project).clear();
-            }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> IntellijUtils.getConsoleView(project).clear());
     }
 
     protected void reportProblems(final Module module, final List<ResolveProblem> problems) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-                final IvyIdeaFacetConfiguration ivyIdeaFacetConfiguration = IvyIdeaFacetConfiguration.getInstance(module);
-                if (ivyIdeaFacetConfiguration == null) {
-                    throw new RuntimeException("Internal error: module " + module.getName() + " does not seem to be have an IvyIDEA facet, but was included in the resolve process anyway.");
-                }
-                final ConsoleView consoleView = IntellijUtils.getConsoleView(module.getProject());
-                String configsForModule;
-                if (ivyIdeaFacetConfiguration.isOnlyResolveSelectedConfigs()) {
-                    final Set<String> configs = ivyIdeaFacetConfiguration.getConfigsToResolve();
-                    if (configs == null || configs.size() == 0) {
-                        configsForModule = "[No configurations selected!]";
-                    } else {
-                        configsForModule = configs.toString();
-                    }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            final IvyIdeaFacetConfiguration ivyIdeaFacetConfiguration = IvyIdeaFacetConfiguration.getInstance(module);
+            if (ivyIdeaFacetConfiguration == null) {
+                throw new RuntimeException("Internal error: module " + module.getName() + " does not seem to be have an IvyIDEA facet, but was included in the resolve process anyway.");
+            }
+            final ConsoleView consoleView = IntellijUtils.getConsoleView(module.getProject());
+            String configsForModule;
+            if (ivyIdeaFacetConfiguration.isOnlyResolveSelectedConfigs()) {
+                final Set<String> configs = ivyIdeaFacetConfiguration.getConfigsToResolve();
+                if (configs == null || configs.size() == 0) {
+                    configsForModule = "[No configurations selected!]";
                 } else {
-                    configsForModule = "[All configurations]";
+                    configsForModule = configs.toString();
                 }
-                if (!problems.isEmpty()) {
-                    consoleView.print("Problems for module '" + module.getName() + " " + configsForModule + "':" + '\n', ConsoleViewContentType.NORMAL_OUTPUT);
-                    for (ResolveProblem resolveProblem : problems) {
-                        consoleView.print("\t" + resolveProblem.toString() + '\n', ConsoleViewContentType.ERROR_OUTPUT);
-                    }
-                    // Make sure the toolwindow becomes visible if there were problems
-                    IntellijUtils.getToolWindow(module.getProject()).show(null);
+            } else {
+                configsForModule = "[All configurations]";
+            }
+            if (!problems.isEmpty()) {
+                consoleView.print("Problems for module '" + module.getName() + " " + configsForModule + "':" + '\n', ConsoleViewContentType.NORMAL_OUTPUT);
+                for (ResolveProblem resolveProblem : problems) {
+                    consoleView.print("\t" + resolveProblem.toString() + '\n', ConsoleViewContentType.ERROR_OUTPUT);
                 }
+                // Make sure the toolwindow becomes visible if there were problems
+                IntellijUtils.getToolWindow(module.getProject()).show(null);
             }
         });
     }
