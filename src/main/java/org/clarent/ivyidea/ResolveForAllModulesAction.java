@@ -55,6 +55,7 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
                 ConsoleView consoleView = IntellijUtils.getConsoleView(project);
                 consoleView.clear();
                 consoleView.print("Initializing Ivy settings\n", ConsoleViewContentType.NORMAL_OUTPUT);
+                indicator.setText("Initializing Ivy settings");
 
                 final IvyManager ivyManager = new IvyManager();
                 final DependencyResolver resolver = new DependencyResolver(ivyManager);
@@ -91,14 +92,17 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
                         return;
                     }
                 }
+                consoleView.print("Finished resolving modules. \n" +
+                                  "Total time spent resolving: " + getDurationText(resolveTime) + "\n" +
+                                  "Total time spent processing: " + getDurationText(processingTime) + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
+                final long dependencyStartTime = System.nanoTime();
                 indicator.setText("Updating IntelliJ modules with resolved dependencies");
                 indicator.setText2("");
                 indicator.setIndeterminate(true);
                 updateIntellijModel(packages.toArray(new DependencyResolutionPackage[packages.size()]));
-                consoleView.print("Finished resolving modules. \n" +
-                                  "Total time spent resolving: " + getDurationText(resolveTime) + "\n" +
-                                  "Total time spent processing: " + getDurationText(processingTime) + "\n" +
-                                  "Total time: " + getDurationText(startTime, System.nanoTime()) + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
+                consoleView.print("Total time spent updating dependencies: " + getDurationText(dependencyStartTime, System.nanoTime()) + "\n" +
+                                  "Total time: " + getDurationText(startTime, System.nanoTime()) + "\n",
+                                  ConsoleViewContentType.NORMAL_OUTPUT);
             }
         });
     }

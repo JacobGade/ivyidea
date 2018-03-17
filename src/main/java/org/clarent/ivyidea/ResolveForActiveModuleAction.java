@@ -21,10 +21,13 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.module.id.ModuleId;
 import org.clarent.ivyidea.exception.IvyFileReadException;
@@ -55,7 +58,10 @@ public class ResolveForActiveModuleAction extends AbstractResolveAction {
         if (module != null) {
             ProgressManager.getInstance().run(new IvyIdeaResolveBackgroundTask(module.getProject(), e) {
                 public void doResolve(@NotNull ProgressIndicator progressIndicator) throws IvySettingsNotFoundException, IvyFileReadException, IvySettingsFileReadException {
-                    clearConsole(myProject);
+                    ConsoleView consoleView = IntellijUtils.getConsoleView(myProject);
+                    consoleView.clear();
+                    consoleView.print("Initializing Ivy settings\n", ConsoleViewContentType.NORMAL_OUTPUT);
+                    progressIndicator.setText("Initializing Ivy settings");
 
                     final IvyManager ivyManager = new IvyManager();
                     final DependencyResolver resolver = new DependencyResolver(ivyManager);
@@ -63,12 +69,14 @@ public class ResolveForActiveModuleAction extends AbstractResolveAction {
 
                     Ivy ivy = ivyManager.getIvy(module);
                     getProgressMonitorThread().setIvy(ivy);
-                    Module[] allModulesWithIvyIdeaFacet = IntellijUtils.getAllModulesWithIvyIdeaFacet(myProject);
+                    Module[] allLoadedModulesWithIvyIdeaFacet = IntellijUtils.getAllModulesWithIvyIdeaFacet(myProject);
+                    Module[] allUnloadedModulesWithIvyIdeaFacet = IntellijUtils.getAllUnloadedModulesWithIvyIdeaFacet(myProject);
+                    Module[] allModulesWithIvyIdeaFacet = (Module[]) ArrayUtils.addAll(allLoadedModulesWithIvyIdeaFacet, allUnloadedModulesWithIvyIdeaFacet);
+
                     HashMap<ModuleId, Module> moduleMap = new HashMap<>();
                     for (final Module module : allModulesWithIvyIdeaFacet){
                         moduleMap.put(ivyManager.getModuleDescriptor(module).getModuleRevisionId().getModuleId(), module);
                     }
-                    ConsoleView consoleView = IntellijUtils.getConsoleView(myProject);
 
                     progressIndicator.setText2("Resolving for module " + module.getName());
 
@@ -78,7 +86,10 @@ public class ResolveForActiveModuleAction extends AbstractResolveAction {
                                       "Resolve time: " + getDurationText(dependencyResolutionPackage.getResolveTime()) + ", " +
                                       "Processing time: " + getDurationText(dependencyResolutionPackage.getExtractDependenciesTime()) + "\n",
                                       ConsoleViewContentType.NORMAL_OUTPUT);
+
                     reportProblems(module, dependencyResolutionPackage.getProblems());
+                    progressIndicator.setText("Updating IntelliJ modules with resolved dependencies");
+                    progressIndicator.setText2("");
 
                     updateIntellijModel(dependencyResolutionPackage);
                 }
