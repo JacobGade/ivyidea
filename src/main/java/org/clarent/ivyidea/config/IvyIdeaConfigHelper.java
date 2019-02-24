@@ -16,6 +16,7 @@
 
 package org.clarent.ivyidea.config;
 
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -40,7 +41,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.*;                                                                                    
+import java.util.*;
 
 /**
  * Handles retrieval of settings from the configuration.
@@ -53,7 +54,6 @@ import java.util.*;
 public class IvyIdeaConfigHelper {
 
     private static final String RESOLVED_LIB_NAME_ROOT = "IvyIDEA";
-    private static final HashMap<String,IvySettings> settingsMap = new HashMap<>();
     public static String getCreatedLibraryName(final ModifiableRootModel model, final String configName) {
         final Project project = model.getProject();
         String libraryName = RESOLVED_LIB_NAME_ROOT;
@@ -138,7 +138,7 @@ public class IvyIdeaConfigHelper {
     }
 
     @Nullable
-    private static String getIvySettingsFile(Module module) throws IvySettingsNotFoundException {
+    static String getIvySettingsFile(Module module) throws IvySettingsNotFoundException {
         final IvyIdeaFacetConfiguration moduleConfiguration = getModuleConfiguration(module);
         if (moduleConfiguration.isUseProjectSettings()) {
             return getProjectIvySettingsFile(module.getProject());
@@ -178,6 +178,7 @@ public class IvyIdeaConfigHelper {
         final IvyIdeaProjectSettings state = component.getState();
         if (state.isUseCustomIvySettings()) {
             String settingsFile = StringUtils.trim(state.getIvySettingsFile());
+            settingsFile = PathMacroManager.getInstance(project).expandPath(settingsFile);
             if (StringUtils.isNotBlank(settingsFile)) {
                 if (!settingsFile.startsWith("http://")
                         && !settingsFile.startsWith("https://")
@@ -232,72 +233,7 @@ public class IvyIdeaConfigHelper {
         return properties;
     }
 
-    @NotNull
-    public static IvySettings createConfiguredIvySettings(Module module) throws IvySettingsNotFoundException, IvySettingsFileReadException {
-        return createConfiguredIvySettings(module, getIvySettingsFile(module), getIvyProperties(module));
-    }
 
-    @NotNull
-    public static IvySettings createConfiguredIvySettings(Module module, @Nullable String settingsFile, Properties properties) throws IvySettingsNotFoundException, IvySettingsFileReadException {
-        String settingsKey = settingsFile + properties.hashCode();
-        if(settingsMap.containsKey(settingsKey))
-            return settingsMap.get(settingsKey);
-        IvySettings s = new IvySettings();
-        injectProperties(s, module, properties); // inject our properties; they may be needed to parse the settings file
-
-        try {
-            if (!StringUtils.isBlank(settingsFile)) {
-                if (settingsFile.startsWith("http://") || settingsFile.startsWith("https://")) {
-                    HttpConfigurable.getInstance().prepareURL(settingsFile);
-                    s.load(new URL(settingsFile));
-                } else if (settingsFile.startsWith("file://")) {
-                    s.load(new URL(settingsFile));
-                } else {
-                    s.load(new File(settingsFile));
-                }
-            } else {
-                s.loadDefault();
-            }
-        } catch (ParseException e) {
-            throw new IvySettingsFileReadException(settingsFile, module.getName(), e);
-        } catch (IOException e) {
-            throw new IvySettingsFileReadException(settingsFile, module.getName(), e);
-        }
-
-        // re-inject our properties; they may overwrite some properties loaded by the settings file
-        for (Map.Entry<Object,Object> entry : properties.entrySet()) {
-            String key = (String) entry.getKey();
-            String value = (String) entry.getValue();
-
-            // we first clear the property to avoid possible cyclic-variable errors (cfr issue 95)
-            s.setVariable(key, null);
-            s.setVariable(key, value);
-        }
-        settingsMap.put(settingsKey, s);
-        return s;
-    }
-
-    private static void injectProperties(IvySettings ivySettings, Module module, Properties properties) {
-        // By default, we use the module root as basedir (can be overridden by properties injected below)
-        fillDefaultBaseDir(ivySettings, module);
-        fillSettingsVariablesWithProperties(ivySettings, properties);
-    }
-
-    private static void fillSettingsVariablesWithProperties(IvySettings ivySettings, Properties properties) {
-        @SuppressWarnings("unchecked")
-        final Enumeration<String> propertyNames = (Enumeration<String>) properties.propertyNames();
-        while (propertyNames.hasMoreElements()) {
-            String propertyName = propertyNames.nextElement();
-            ivySettings.setVariable(propertyName, properties.getProperty(propertyName));
-        }
-    }
-
-    private static void fillDefaultBaseDir(IvySettings ivySettings, Module module) {
-        final File moduleFileFolder = new File(module.getModuleFilePath()).getParentFile();
-        if (moduleFileFolder != null) {
-            ivySettings.setBaseDir(moduleFileFolder.getAbsoluteFile());
-        }
-    }
 
     private static IvyIdeaFacetConfiguration getModuleConfiguration(Module module) {
         final IvyIdeaFacetConfiguration moduleConfiguration = IvyIdeaFacetConfiguration.getInstance(module);

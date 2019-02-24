@@ -18,7 +18,6 @@ package org.clarent.ivyidea.resolve.dependency;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.clarent.ivyidea.intellij.model.IntellijModuleWrapper;
@@ -31,18 +30,18 @@ import java.util.logging.Logger;
  *
  * @author Guy Mahieu
  */
-public abstract class ExternalDependency implements ResolvedDependency {
+public abstract class ExternalDependency extends ResolvedDependencyBase {
 
     private static final Logger LOGGER = Logger.getLogger(ExternalDependency.class.getName());
 
     private final Artifact artifact;
-    private final String configurationName;
     private final File localFile;
 
     public ExternalDependency(Artifact artifact, File localFile, final String configurationName) {
         this.artifact = artifact;
         this.localFile = localFile;
-        this.configurationName = configurationName;
+        if(configurationName != null)
+            addConfiguration(configurationName);
     }
 
     public File getLocalFile() {
@@ -53,9 +52,6 @@ public abstract class ExternalDependency implements ResolvedDependency {
         return VfsUtil.getUrlForLibraryRoot(getLocalFile());
     }
 
-    public String getConfigurationName() {
-        return configurationName;
-    }
 
     public void addTo(IntellijModuleWrapper intellijModuleWrapper) {
         if (localFile == null) {

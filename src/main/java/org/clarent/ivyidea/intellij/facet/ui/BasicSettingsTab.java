@@ -30,11 +30,13 @@ import org.apache.ivy.Ivy;
 import org.apache.ivy.core.module.descriptor.Configuration;
 import org.apache.ivy.core.settings.IvySettings;
 import org.clarent.ivyidea.config.IvyIdeaConfigHelper;
+import org.clarent.ivyidea.config.IvyIdeaSettingsProvider;
 import org.clarent.ivyidea.exception.IvySettingsFileReadException;
 import org.clarent.ivyidea.exception.IvySettingsNotFoundException;
 import org.clarent.ivyidea.intellij.facet.config.IvyIdeaFacetConfiguration;
 import org.clarent.ivyidea.intellij.facet.ui.components.ConfigurationSelectionTable;
 import org.clarent.ivyidea.intellij.facet.ui.components.ConfigurationSelectionTableModel;
+import org.clarent.ivyidea.intellij.ui.CollapsingTextComponentAccessor;
 import org.clarent.ivyidea.ivy.IvyUtil;
 import org.clarent.ivyidea.util.StringUtils;
 import org.jetbrains.annotations.Nls;
@@ -57,6 +59,7 @@ import java.util.logging.Logger;
 public class BasicSettingsTab extends FacetEditorTab {
 
     private static final Logger LOGGER = Logger.getLogger(BasicSettingsTab.class.getName());
+    private final IvyIdeaSettingsProvider settingsProvider;
 
     private com.intellij.openapi.ui.TextFieldWithBrowseButton txtIvyFile;
     private JPanel pnlRoot;
@@ -78,6 +81,7 @@ public class BasicSettingsTab extends FacetEditorTab {
         this.editorContext = editorContext;
         this.propertiesSettingsTab = propertiesSettingsTab;
         this.propertiesSettingsTab.reset();
+        this.settingsProvider = new IvyIdeaSettingsProvider();
 
         UserActivityWatcher watcher = new UserActivityWatcher();
         watcher.addUserActivityListener(new UserActivityListener() {
@@ -87,9 +91,17 @@ public class BasicSettingsTab extends FacetEditorTab {
         });
         watcher.register(pnlRoot);
 
-        txtIvyFile.addBrowseFolderListener("Select ivy file", "", editorContext.getProject(), new FileChooserDescriptor(true, false, false, false, false, false));
-        txtIvySettingsFile.addBrowseFolderListener("Select ivy settings file", "", editorContext.getProject(), new FileChooserDescriptor(true, false, false, false, false, false));
-
+        txtIvyFile.addBrowseFolderListener("Select ivy file", "",
+                                           editorContext.getProject(),
+                                           new FileChooserDescriptor(true, false, false, false, false, false),
+                                           new CollapsingTextComponentAccessor(editorContext.getModule()));
+        txtIvySettingsFile.addBrowseFolderListener("Select ivy settings file", "",
+                                                   editorContext.getProject(),
+                                                   new FileChooserDescriptor(true, false, false, false, false, false),
+                                                   new CollapsingTextComponentAccessor(editorContext.getModule()));
+        txtIvySettingsFile.addBrowseFolderListener("Select ivy settings file", "",
+                                                   editorContext.getProject(),
+                                                   new FileChooserDescriptor(true, false, false, false, false, false));
         txtIvyFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             public void textChanged(DocumentEvent e) {
                 reloadIvyFile();
@@ -180,7 +192,7 @@ public class BasicSettingsTab extends FacetEditorTab {
     @NotNull
     private Ivy createIvyEngineForCurrentSettingsInUI() throws IvySettingsNotFoundException, IvySettingsFileReadException {
         final Module module = this.editorContext.getModule();
-        final IvySettings ivySettings = IvyIdeaConfigHelper.createConfiguredIvySettings(module, this.getIvySettingsFileNameForCurrentSettingsInUI(), getPropertiesForCurrentSettingsInUI());
+        final IvySettings ivySettings = settingsProvider.createConfiguredIvySettings(module, this.getIvySettingsFileNameForCurrentSettingsInUI(), getPropertiesForCurrentSettingsInUI());
         return IvyUtil.createConfiguredIvyEngine(module, ivySettings);
     }
 

@@ -20,6 +20,10 @@ import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+
 /**
  * @author Guy Mahieu
  */
@@ -33,6 +37,11 @@ public class IvyIdeaPlugin implements ApplicationComponent {
     }
 
     public void initComponent() {
+        LogManager logManager = LogManager.getLogManager();
+        Enumeration<String> loggerNames = logManager.getLoggerNames();
+        while(loggerNames.hasMoreElements()) {
+            logManager.getLogger(loggerNames.nextElement()).setLevel(Level.WARNING);
+        }
     }
 
     public void disposeComponent() {

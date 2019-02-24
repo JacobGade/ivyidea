@@ -75,7 +75,8 @@ public class IvyIdeaProjectSettingsPanel {
         this.project = project;
         this.internalState = state;
 
-        txtIvySettingsFile.addBrowseFolderListener("Select ivy settings file", null, project, new FileChooserDescriptor(true, false, false, false, false, false));
+        txtIvySettingsFile.addBrowseFolderListener("Select ivy settings file", null, project, new FileChooserDescriptor(true, false, false, false, false, false),
+                                                   new CollapsingTextComponentAccessor(project));
 
         wireActivityWatchers();
         wireIvySettingsRadioButtons();

@@ -21,6 +21,7 @@ import org.apache.ivy.Ivy;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.settings.IvySettings;
 import org.clarent.ivyidea.config.IvyIdeaConfigHelper;
+import org.clarent.ivyidea.config.IvyIdeaSettingsProvider;
 import org.clarent.ivyidea.exception.IvySettingsFileReadException;
 import org.clarent.ivyidea.exception.IvySettingsNotFoundException;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +36,18 @@ import java.util.Map;
 
 public class IvyManager {
 
-    private Map<Module, Ivy> configuredIvyInstances = new HashMap<Module, Ivy>();
-    private Map<Module, ModuleDescriptor> moduleDescriptors = new HashMap<Module, ModuleDescriptor>();
-    private Map<IvySettings, Ivy> ivyMap = new HashMap<>();
+    private final IvyIdeaSettingsProvider settingsProvider;
+    private final Map<Module, Ivy> configuredIvyInstances = new HashMap<>();
+    private final Map<Module, ModuleDescriptor> moduleDescriptors = new HashMap<>();
+    private final Map<IvySettings, Ivy> ivyMap = new HashMap<>();
+
+    public IvyManager() {
+        settingsProvider = new IvyIdeaSettingsProvider();
+    }
+
     public Ivy getIvy(final Module module) throws IvySettingsNotFoundException, IvySettingsFileReadException {
         if (!configuredIvyInstances.containsKey(module)) {
-            final IvySettings configuredIvySettings = IvyIdeaConfigHelper.createConfiguredIvySettings(module);
+            final IvySettings configuredIvySettings = settingsProvider.createConfiguredIvySettings(module);
             if(ivyMap.containsKey(configuredIvySettings))
                 return ivyMap.get(configuredIvySettings);
             final Ivy ivy = IvyUtil.createConfiguredIvyEngine(module, configuredIvySettings);

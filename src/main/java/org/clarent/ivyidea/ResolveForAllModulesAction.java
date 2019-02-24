@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import org.apache.ivy.Ivy;
+import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.module.id.ModuleId;
 import org.clarent.ivyidea.exception.IvyFileReadException;
 import org.clarent.ivyidea.exception.IvySettingsFileReadException;
@@ -58,30 +59,41 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
                 indicator.setText("Initializing Ivy settings");
 
                 final IvyManager ivyManager = new IvyManager();
-                final DependencyResolver resolver = new DependencyResolver(ivyManager);
+                final DependencyResolver resolver = new DependencyResolver();
                 final long startTime = System.nanoTime();
                 long resolveTime = 0;
                 long processingTime = 0;
-                Module[] allModulesWithIvyIdeaFacet = IntellijUtils.getAllModulesWithIvyIdeaFacet(project);
+                Module[] allLoadedModulesWithIvyIdeaFacet = IntellijUtils.getAllModulesWithIvyIdeaFacet(project);
                 HashMap<ModuleId, Module> moduleMap = new HashMap<>();
                 ArrayList<DependencyResolutionPackage> packages = new ArrayList<>();
-                for (final Module module : allModulesWithIvyIdeaFacet){
-                    moduleMap.put(ivyManager.getModuleDescriptor(module).getModuleRevisionId().getModuleId(), module);
+                ArrayList<Module> brokenModules = new ArrayList<>();
+                for (final Module module : allLoadedModulesWithIvyIdeaFacet){
+                    ModuleDescriptor moduleDescriptor = ivyManager.getModuleDescriptor(module);
+                    if(moduleDescriptor != null)
+                        moduleMap.put(moduleDescriptor.getModuleRevisionId().getModuleId(), module);
+                    else{
+                        brokenModules.add(module);
+                    }
                 }
-
-                for (int i = 0; i < allModulesWithIvyIdeaFacet.length; i++) {
-                    Module module = allModulesWithIvyIdeaFacet[i];
-                    indicator.setFraction(((double)i) / allModulesWithIvyIdeaFacet.length);
-                    indicator.setText("Resolve for all modules ("+(i+1)+"/"+allModulesWithIvyIdeaFacet.length+")");
+                if(!brokenModules.isEmpty()){
+                    consoleView.print("Unable to find Ivy files at specified location for following modules. \n" +
+                                      String.join("\n", brokenModules.stream().map(Module::getName).toArray(String[]::new)),
+                                      ConsoleViewContentType.ERROR_OUTPUT);
+                    return;
+                }
+                for (int i = 0; i < allLoadedModulesWithIvyIdeaFacet.length; i++) {
+                    Module module = allLoadedModulesWithIvyIdeaFacet[i];
+                    indicator.setFraction(((double)i) / allLoadedModulesWithIvyIdeaFacet.length);
+                    indicator.setText("Resolve for all modules ("+(i+1)+"/"+allLoadedModulesWithIvyIdeaFacet.length+")");
 
                     Ivy ivy = ivyManager.getIvy(module);
                     getProgressMonitorThread().setIvy(ivy);
-                    indicator.setText("Resolve for all modules ("+(i+1)+"/"+allModulesWithIvyIdeaFacet.length+")");
+                    indicator.setText("Resolve for all modules ("+(i+1)+"/"+allLoadedModulesWithIvyIdeaFacet.length+")");
                     indicator.setText2("Resolving for module " + module.getName());
 
                     DependencyResolutionPackage resolve = resolver.resolve(ivy, module, moduleMap);
                     packages.add(resolve);
-                    consoleView.print("(" + (i+1) + "/" + allModulesWithIvyIdeaFacet.length + ") Resolved dependencies for " + module.getName() + ". " +
+                    consoleView.print("(" + (i+1) + "/" + allLoadedModulesWithIvyIdeaFacet.length + ") Resolved dependencies for " + module.getName() + ". " +
                                       "Resolve time: " + getDurationText(resolve.getResolveTime()) + ", " +
                                       "Processing time: " + getDurationText(resolve.getExtractDependenciesTime()) + "\n",
                                         ConsoleViewContentType.NORMAL_OUTPUT);

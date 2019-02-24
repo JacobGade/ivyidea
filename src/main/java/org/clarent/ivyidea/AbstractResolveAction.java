@@ -21,8 +21,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import org.apache.commons.lang.time.DurationFormatUtils;
 import org.clarent.ivyidea.intellij.IntellijUtils;
 import org.clarent.ivyidea.intellij.facet.config.IvyIdeaFacetConfiguration;
 import org.clarent.ivyidea.intellij.model.IntellijModuleWrapper;
@@ -30,7 +28,6 @@ import org.clarent.ivyidea.resolve.problem.ResolveProblem;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
 
 /**
  * @author Guy Mahieu
@@ -47,10 +44,6 @@ public abstract class AbstractResolveAction extends AnAction {
                                                                                           }
                                                                                       }));
         }
-    }
-
-    protected void clearConsole(final Project project) {
-        ApplicationManager.getApplication().invokeLater(() -> IntellijUtils.getConsoleView(project).clear());
     }
 
     protected void reportProblems(final Module module, final List<ResolveProblem> problems) {
@@ -87,7 +80,13 @@ public abstract class AbstractResolveAction extends AnAction {
     }
 
     protected String getDurationText(long durationNanos){
-        return DurationFormatUtils.formatDurationHMS((durationNanos) / 1000000);
+        long tempMsSec = durationNanos/(1000*1000);
+        long ms = tempMsSec % 1000;
+        long sec = tempMsSec % 60*1000;
+        long min = (tempMsSec /60*1000) % 60;
+        long hour = (tempMsSec /(60*60*1000)) % 24;
+        long day = (tempMsSec / (24*60*60*1000)) % 24;
+        return String.format("%d:%d:%d.%d", hour,min,sec, ms);
     }
 }
 

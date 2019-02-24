@@ -18,6 +18,8 @@ package org.clarent.ivyidea.resolve.dependency;
 
 import org.clarent.ivyidea.intellij.model.IntellijModuleWrapper;
 
+import java.util.Set;
+
 /**
  * @author Guy Mahieu
  */
@@ -25,5 +27,6 @@ import org.clarent.ivyidea.intellij.model.IntellijModuleWrapper;
 public interface ResolvedDependency {
 
     void addTo(IntellijModuleWrapper intellijModuleWrapper);
-
+    void addConfiguration(String configuration);
+    Set<String> getConfigurations();
 }

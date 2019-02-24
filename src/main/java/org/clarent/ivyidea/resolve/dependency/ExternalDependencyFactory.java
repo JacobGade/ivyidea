@@ -30,15 +30,9 @@ import java.io.File;
  */
 public class ExternalDependencyFactory {
 
-    private static ExternalDependencyFactory instance = new ExternalDependencyFactory();
-
-    public static ExternalDependencyFactory getInstance() {
-        return instance;
-    }
-
     @Nullable
-    public ExternalDependency createExternalDependency(@NotNull Artifact artifact, @Nullable File file,
-                                                       @NotNull Project project, @NotNull final String configurationName) {
+    public static ExternalDependency createExternalDependency(@NotNull Artifact artifact, @Nullable File file,
+                                                       @NotNull Project project, final String configurationName) {
         final ArtifactTypeSettings.DependencyCategory category = determineCategory(project, artifact);
         if (category != null) {
             switch (category) {

@@ -1,7 +1,7 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<!DOCTYPE idea-plugin>
 <idea-plugin url="http://www.ivyidea.org">
     <name>IvyIDEA</name>
-    <description><![CDATA[Resolves module dependencies through Ivy
+    <description><![CDATA[Resolves module dependencies through Ivy (Special Cetrea version)
         <p>Features:
             <ul>
                 <li>Apache Ivy integration (up to v2.4.0); no need for external ant build scripts to be called</li>
@@ -16,6 +16,17 @@
     </description>
     <change-notes><![CDATA[
         <p>
+            <strong>1.0.15</strong>
+            <ul>
+                <li>Improve feedback during resolution</li>
+                <li>Allow for relative paths for settings files if they are inside the project folder</li>
+                <li>Attenmpt to match Ivy configuration name with intelliJ dependency scope. (Beware of different transitivity for test scope)</li>
+                <li>When resolving all modules only resolve for loaded modules</li>
+                <li>Better resilience towards missing ivy files, so it is properly reported.</li>
+                <li>Updating IntelliJ project dependencies is no longer done in parallel to avoid issues on projects with many modules.</li>
+                <li>Reuse ivy instance when settings are identical to improve performance</li>
+                <li>Rewrote some of the resolution code for better performance.</li>
+            </ul>
             <strong>1.0.14</strong>
             <ul>
                 <li>When trying to resolve dependencies without an Ivy settings file, an IllegalArgumentException 
@@ -118,7 +129,7 @@
             </ul>
         </p>]]>
     </change-notes>
-    <version>1.0.14</version>
+    <version>1.0.15</version>
     <vendor email="guy.mahieu@gmail.com" url="http://www.clarent.org" logo="/ivyidea16.png">Guy Mahieu</vendor>
     <idea-version since-build="3000"/>
     <application-components>

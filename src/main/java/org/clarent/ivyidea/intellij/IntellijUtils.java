@@ -18,6 +18,8 @@ package org.clarent.ivyidea.intellij;
 
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.FacetManager;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -68,4 +70,10 @@ public class IntellijUtils {
         return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowRegistrationComponent.TOOLWINDOW_ID);
     }
 
+    public static String getRelativePathIfInProjectFolder(ComponentManager project, String path){
+        String collapsedPath = PathMacroManager.getInstance(project)
+                                               .collapsePath(path.replace("\\", "/"));
+        // We only want to use the collapsed path if it is inside the project folder.
+        return collapsedPath.contains("/../") ? path : collapsedPath;
+    }
 }

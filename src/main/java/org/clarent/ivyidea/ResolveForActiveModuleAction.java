@@ -21,14 +21,12 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.ivy.Ivy;
+import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.module.id.ModuleId;
 import org.clarent.ivyidea.exception.IvyFileReadException;
 import org.clarent.ivyidea.exception.IvySettingsFileReadException;
@@ -40,6 +38,7 @@ import org.clarent.ivyidea.resolve.DependencyResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -64,21 +63,29 @@ public class ResolveForActiveModuleAction extends AbstractResolveAction {
                     progressIndicator.setText("Initializing Ivy settings");
 
                     final IvyManager ivyManager = new IvyManager();
-                    final DependencyResolver resolver = new DependencyResolver(ivyManager);
-                    final long startTime = System.nanoTime();
+                    final DependencyResolver resolver = new DependencyResolver();
 
                     Ivy ivy = ivyManager.getIvy(module);
                     getProgressMonitorThread().setIvy(ivy);
                     Module[] allLoadedModulesWithIvyIdeaFacet = IntellijUtils.getAllModulesWithIvyIdeaFacet(myProject);
-                    Module[] allUnloadedModulesWithIvyIdeaFacet = IntellijUtils.getAllUnloadedModulesWithIvyIdeaFacet(myProject);
-                    Module[] allModulesWithIvyIdeaFacet = (Module[]) ArrayUtils.addAll(allLoadedModulesWithIvyIdeaFacet, allUnloadedModulesWithIvyIdeaFacet);
 
                     HashMap<ModuleId, Module> moduleMap = new HashMap<>();
-                    for (final Module module : allModulesWithIvyIdeaFacet){
-                        moduleMap.put(ivyManager.getModuleDescriptor(module).getModuleRevisionId().getModuleId(), module);
+                    ArrayList<Module> brokenModules = new ArrayList<>();
+                    for (final Module module : allLoadedModulesWithIvyIdeaFacet){
+                        ModuleDescriptor moduleDescriptor = ivyManager.getModuleDescriptor(module);
+                        if(moduleDescriptor != null)
+                            moduleMap.put(moduleDescriptor.getModuleRevisionId().getModuleId(), module);
+                        else{
+                            brokenModules.add(module);
+                        }
                     }
-
-                    progressIndicator.setText2("Resolving for module " + module.getName());
+                    if(!brokenModules.isEmpty()){
+                        consoleView.print("Unable to find Ivy files at specified location for following modules. \n" +
+                                          String.join("\n", brokenModules.stream().map(Module::getName).toArray(String[]::new)),
+                                          ConsoleViewContentType.ERROR_OUTPUT);
+                        return;
+                    }
+                    progressIndicator.setText("Resolving for module " + module.getName());
 
                     DependencyResolutionPackage dependencyResolutionPackage =  resolver.resolve(ivy, module, moduleMap);
 
