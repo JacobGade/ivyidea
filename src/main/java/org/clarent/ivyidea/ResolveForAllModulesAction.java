@@ -38,6 +38,7 @@ import org.clarent.ivyidea.resolve.DependencyResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -72,15 +73,18 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
                     if(moduleDescriptor != null)
                         moduleMap.put(moduleDescriptor.getModuleRevisionId().getModuleId(), module);
                     else{
+                        consoleView.print("Unable to find Ivy files at specified location for following modules. \n" +
+                                          String.join("\n", brokenModules.stream().map(Module::getName).toArray(String[]::new)),
+                                          ConsoleViewContentType.ERROR_OUTPUT);
                         brokenModules.add(module);
                     }
                 }
-                if(!brokenModules.isEmpty()){
-                    consoleView.print("Unable to find Ivy files at specified location for following modules. \n" +
-                                      String.join("\n", brokenModules.stream().map(Module::getName).toArray(String[]::new)),
-                                      ConsoleViewContentType.ERROR_OUTPUT);
-                    return;
-                }
+                allLoadedModulesWithIvyIdeaFacet = Arrays.stream(allLoadedModulesWithIvyIdeaFacet)
+                                                         .filter(m -> !brokenModules.contains(m))
+                                                         .toArray(Module[]::new);
+
+                String resolvingFormatString = "(%d/"+allLoadedModulesWithIvyIdeaFacet.length+") Resolving dependencies for %s\n";
+                String resolvedFormatString = "(%d/"+allLoadedModulesWithIvyIdeaFacet.length+") Finished resolving dependencies for %s. Resolve time: %s, Processing time: %s\n";
                 for (int i = 0; i < allLoadedModulesWithIvyIdeaFacet.length; i++) {
                     Module module = allLoadedModulesWithIvyIdeaFacet[i];
                     indicator.setFraction(((double)i) / allLoadedModulesWithIvyIdeaFacet.length);
@@ -88,18 +92,18 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
 
                     Ivy ivy = ivyManager.getIvy(module);
                     getProgressMonitorThread().setIvy(ivy);
-                    indicator.setText("Resolve for all modules ("+(i+1)+"/"+allLoadedModulesWithIvyIdeaFacet.length+")");
                     indicator.setText2("Resolving for module " + module.getName());
-
+                    consoleView.print(String.format(resolvingFormatString, i+1, module.getName()),
+                                      ConsoleViewContentType.NORMAL_OUTPUT);
                     DependencyResolutionPackage resolve = resolver.resolve(ivy, module, moduleMap);
                     packages.add(resolve);
-                    consoleView.print("(" + (i+1) + "/" + allLoadedModulesWithIvyIdeaFacet.length + ") Resolved dependencies for " + module.getName() + ". " +
-                                      "Resolve time: " + getDurationText(resolve.getResolveTime()) + ", " +
-                                      "Processing time: " + getDurationText(resolve.getExtractDependenciesTime()) + "\n",
-                                        ConsoleViewContentType.NORMAL_OUTPUT);
+                    consoleView.print(String.format(resolvedFormatString,
+                                                    i + 1, module.getName(),
+                                                    getDurationText(resolve.getResolveTime()),
+                                                    getDurationText(resolve.getExtractDependenciesTime())),
+                                      ConsoleViewContentType.NORMAL_OUTPUT);
                     resolveTime += resolve.getResolveTime();
                     processingTime += resolve.getExtractDependenciesTime();
-                    reportProblems(module, resolve.getProblems());
                     if (indicator.isCanceled()) {
                         return;
                     }
@@ -107,7 +111,12 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
                 consoleView.print("Finished resolving modules. \n" +
                                   "Total time spent resolving: " + getDurationText(resolveTime) + "\n" +
                                   "Total time spent processing: " + getDurationText(processingTime) + "\n", ConsoleViewContentType.NORMAL_OUTPUT);
+                for (DependencyResolutionPackage module : packages){
+                    if(!module.getProblems().isEmpty())
+                        reportProblems(module.getModule(), module.getProblems());
+                }
                 final long dependencyStartTime = System.nanoTime();
+                consoleView.print("Updating IntelliJ modules with resolved dependencies", ConsoleViewContentType.NORMAL_OUTPUT);
                 indicator.setText("Updating IntelliJ modules with resolved dependencies");
                 indicator.setText2("");
                 indicator.setIndeterminate(true);

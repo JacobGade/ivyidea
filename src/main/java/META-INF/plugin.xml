@@ -16,16 +16,23 @@
     </description>
     <change-notes><![CDATA[
         <p>
+            <strong>1.0.16</strong>
+            <ul>
+                <li>Added log statement before starting resolution to make it more apparent where errors belong.</li>
+                <li>Continue resolving all modules even when dependency error is encountered in one module.</li>
+                <li>Summary of errors will be displayed after resolution is done.</li>
+                <li>Allow the console to be visible during indexing.</li>
+            </ul>
             <strong>1.0.15</strong>
             <ul>
-                <li>Improve feedback during resolution</li>
+                <li>Improve feedback during resolution. Progress will not be reflected both in the console and in the indicator at the bottom.</li>
                 <li>Allow for relative paths for settings files if they are inside the project folder</li>
-                <li>Attenmpt to match Ivy configuration name with intelliJ dependency scope. (Beware of different transitivity for test scope)</li>
+                <li>Attempt to match Ivy configuration name with intelliJ dependency scope. (Beware of difference in transitivity)</li>
                 <li>When resolving all modules only resolve for loaded modules</li>
                 <li>Better resilience towards missing ivy files, so it is properly reported.</li>
                 <li>Updating IntelliJ project dependencies is no longer done in parallel to avoid issues on projects with many modules.</li>
                 <li>Reuse ivy instance when settings are identical to improve performance</li>
-                <li>Rewrote some of the resolution code for better performance.</li>
+                <li>Refactored some of the resolution code to make reuse possible.</li>
             </ul>
             <strong>1.0.14</strong>
             <ul>
@@ -129,8 +136,8 @@
             </ul>
         </p>]]>
     </change-notes>
-    <version>1.0.15</version>
-    <vendor email="guy.mahieu@gmail.com" url="http://www.clarent.org" logo="/ivyidea16.png">Guy Mahieu</vendor>
+    <version>1.0.16</version>
+    <vendor email="jacob.gade@getinge.com">Jacob Gade</vendor>
     <idea-version since-build="3000"/>
     <application-components>
         <component>

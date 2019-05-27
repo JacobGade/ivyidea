@@ -18,6 +18,7 @@ package org.clarent.ivyidea.intellij;
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -80,7 +81,7 @@ public class ToolWindowRegistrationComponent implements ProjectComponent {
 
     private void registerToolWindow() {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM);
+        ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM, () -> {}, true);
         console = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
         Content content = ServiceManager.getService(ContentFactory.class).createContent(console.getComponent(), "Console", true);
         toolWindow.setIcon(IvyIdeaIcons.MAIN_ICON_SMALL);

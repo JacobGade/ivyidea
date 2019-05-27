@@ -29,6 +29,8 @@ import org.apache.ivy.core.report.ConfigurationResolveReport;
 import org.apache.ivy.core.report.ResolveReport;
 import org.apache.ivy.core.resolve.DownloadOptions;
 import org.apache.ivy.core.resolve.IvyNode;
+import org.apache.ivy.core.resolve.ResolveProcessException;
+import org.apache.ivy.plugins.conflict.StrictConflictException;
 import org.clarent.ivyidea.DependencyResolutionPackage;
 import org.clarent.ivyidea.config.IvyIdeaConfigHelper;
 import org.clarent.ivyidea.config.model.ArtifactTypeSettings;
@@ -62,18 +64,25 @@ public class DependencyResolver {
         }
         DependencyResolutionPackage dependencyResolutionPackage;
 
+        List<ResolvedDependency> resolvedDependencies;
+        final long resolveStartTime = System.nanoTime();
+
         try {
-            final List<ResolveProblem> resolveProblems = new ArrayList<>();
-            List<ResolvedDependency> resolvedDependencies;
-            final long resolveStartTime = System.nanoTime();
             final ResolveReport resolveReport = ivy.resolve(ivyFile.toURI().toURL(), IvyIdeaConfigHelper.createResolveOptions(module));
             final long resolveTime = System.nanoTime() - resolveStartTime;
             final long extractDependenciesStartTime = System.nanoTime();
+            final List<ResolveProblem> resolveProblems = new ArrayList<>();
             resolvedDependencies = extractDependencies(ivy, module, resolveReport, getIntelliJModuleDependencies(resolveReport, moduleMap), resolveProblems);
             final long extractDependenciesTime = System.nanoTime() - extractDependenciesStartTime;
             dependencyResolutionPackage = new DependencyResolutionPackage(module, resolvedDependencies, resolveProblems, resolveTime, extractDependenciesTime);
         } catch (ParseException | IOException e) {
             throw new IvyFileReadException(ivyFile.getAbsolutePath(), module.getName(), e);
+        }
+        catch (ResolveProcessException e) {
+            final long resolveTime = System.nanoTime() - resolveStartTime;
+            final List<ResolveProblem> resolveProblems = new ArrayList<>();
+            resolveProblems.add(new ResolveProblem(module.getName(), e.getMessage()));
+            dependencyResolutionPackage = new DependencyResolutionPackage(module, new ArrayList<>(), resolveProblems, resolveTime, 0);
         }
         return dependencyResolutionPackage;
     }

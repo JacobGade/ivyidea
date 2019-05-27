@@ -16,6 +16,7 @@
 
 package org.clarent.ivyidea;
 
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,13 +27,16 @@ import org.clarent.ivyidea.intellij.facet.config.IvyIdeaFacetConfiguration;
 import org.clarent.ivyidea.intellij.model.IntellijModuleWrapper;
 import org.clarent.ivyidea.resolve.problem.ResolveProblem;
 
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author Guy Mahieu
  */
-public abstract class AbstractResolveAction extends AnAction {
+abstract class AbstractResolveAction extends AnAction {
+    private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
     protected void updateIntellijModel(final DependencyResolutionPackage... packages) {
         for (DependencyResolutionPackage drp : packages) {
@@ -46,7 +50,7 @@ public abstract class AbstractResolveAction extends AnAction {
         }
     }
 
-    protected void reportProblems(final Module module, final List<ResolveProblem> problems) {
+    void reportProblems(final Module module, final List<ResolveProblem> problems) {
         ApplicationManager.getApplication().invokeLater(() -> {
             final IvyIdeaFacetConfiguration ivyIdeaFacetConfiguration = IvyIdeaFacetConfiguration.getInstance(module);
             if (ivyIdeaFacetConfiguration == null) {
@@ -65,28 +69,28 @@ public abstract class AbstractResolveAction extends AnAction {
                 configsForModule = "[All configurations]";
             }
             if (!problems.isEmpty()) {
-                consoleView.print("Problems for module '" + module.getName() + " " + configsForModule + "':" + '\n', ConsoleViewContentType.NORMAL_OUTPUT);
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("Problems for module '%s %s':\n", module.getName(), configsForModule));
                 for (ResolveProblem resolveProblem : problems) {
-                    consoleView.print("\t" + resolveProblem.toString() + '\n', ConsoleViewContentType.ERROR_OUTPUT);
+                    sb.append(String.format("\t%s\n",resolveProblem.toString()));
                 }
+                consoleView.print(sb.toString(), ConsoleViewContentType.ERROR_OUTPUT);
+                if(consoleView instanceof ConsoleViewImpl)
+                    ((ConsoleViewImpl)consoleView).flushDeferredText();
                 // Make sure the toolwindow becomes visible if there were problems
                 IntellijUtils.getToolWindow(module.getProject()).show(null);
             }
         });
     }
 
-    protected String getDurationText(long startNanos, long stopNanos){
+    String getDurationText(long startNanos, long stopNanos){
         return getDurationText(stopNanos - startNanos );
     }
 
-    protected String getDurationText(long durationNanos){
-        long tempMsSec = durationNanos/(1000*1000);
-        long ms = tempMsSec % 1000;
-        long sec = tempMsSec % 60*1000;
-        long min = (tempMsSec /60*1000) % 60;
-        long hour = (tempMsSec /(60*60*1000)) % 24;
-        long day = (tempMsSec / (24*60*60*1000)) % 24;
-        return String.format("%d:%d:%d.%d", hour,min,sec, ms);
+    String getDurationText(long durationNanos){
+
+        LocalDateTime time = LocalDate.now().atTime(LocalTime.ofNanoOfDay(durationNanos));
+        return time.format(dateTimeFormatter);
     }
 }
 
