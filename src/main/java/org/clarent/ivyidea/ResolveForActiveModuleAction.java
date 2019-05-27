@@ -98,7 +98,7 @@ public class ResolveForActiveModuleAction extends AbstractResolveAction {
                     progressIndicator.setText("Updating IntelliJ modules with resolved dependencies");
                     progressIndicator.setText2("");
 
-                    updateIntellijModel(dependencyResolutionPackage);
+                    updateIntellijModel(myProject, dependencyResolutionPackage);
                 }
             });
         }

@@ -22,6 +22,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import org.clarent.ivyidea.intellij.IntellijUtils;
 import org.clarent.ivyidea.intellij.facet.config.IvyIdeaFacetConfiguration;
 import org.clarent.ivyidea.intellij.model.IntellijModuleWrapper;
@@ -38,16 +40,22 @@ import java.util.Set;
 abstract class AbstractResolveAction extends AnAction {
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
-    protected void updateIntellijModel(final DependencyResolutionPackage... packages) {
-        for (DependencyResolutionPackage drp : packages) {
-            ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication()
-                                                                                      .runWriteAction(() -> {
-                                                                                          try (IntellijModuleWrapper moduleWrapper = IntellijModuleWrapper
-                                                                                                  .forModule(drp.getModule())) {
-                                                                                              moduleWrapper.updateDependencies(drp.getDependencies());
-                                                                                          }
-                                                                                      }));
-        }
+    void updateIntellijModel(final Project project, final DependencyResolutionPackage... packages) {
+        DumbService.getInstance(project)
+                   .suspendIndexingAndRun("Updating IntelliJ module dependencies",
+                                          () -> {
+                                              for (DependencyResolutionPackage drp : packages) {
+                                                  ApplicationManager.getApplication()
+                                                                    .invokeAndWait(() -> ApplicationManager.getApplication()
+                                                                                                           .runWriteAction(() -> {
+                                                                                                               try (IntellijModuleWrapper moduleWrapper = IntellijModuleWrapper
+                                                                                                                       .forModule(drp.getModule())) {
+                                                                                                                   moduleWrapper.updateDependencies(
+                                                                                                                           drp.getDependencies());
+                                                                                                               }
+                                                                                                           }));
+                                              }
+                                          });
     }
 
     void reportProblems(final Module module, final List<ResolveProblem> problems) {

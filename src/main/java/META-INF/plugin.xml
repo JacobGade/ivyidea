@@ -1,7 +1,7 @@
 <!DOCTYPE idea-plugin>
 <idea-plugin url="http://www.ivyidea.org">
     <name>IvyIDEA</name>
-    <description><![CDATA[Resolves module dependencies through Ivy (Special Cetrea version)
+    <description><![CDATA[Resolves module dependencies through Ivy (Fork of IvyIdea plugin by Guy Mahieu)
         <p>Features:
             <ul>
                 <li>Apache Ivy integration (up to v2.4.0); no need for external ant build scripts to be called</li>
@@ -16,6 +16,10 @@
     </description>
     <change-notes><![CDATA[
         <p>
+            <strong>1.0.17</strong>
+            <ul>
+                <li>Disable indexing while updating IntelliJ module dependencies.</li>
+            </ul>
             <strong>1.0.16</strong>
             <ul>
                 <li>Added log statement before starting resolution to make it more apparent where errors belong.</li>
@@ -136,8 +140,8 @@
             </ul>
         </p>]]>
     </change-notes>
-    <version>1.0.16</version>
-    <vendor email="jacob.gade@getinge.com">Jacob Gade</vendor>
+    <version>1.0.17</version>
+    <vendor email="GadeSoftware@gmail.com">Jacob Gade</vendor>
     <idea-version since-build="3000"/>
     <application-components>
         <component>
