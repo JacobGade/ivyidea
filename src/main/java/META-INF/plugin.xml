@@ -16,6 +16,10 @@
     </description>
     <change-notes><![CDATA[
         <p>
+            <strong>1.0.18</strong>
+            <ul>
+                <li>Reverted changes to internal logging that caused intermittent NPE on latest version of IntelliJ.</li>
+            </ul>
             <strong>1.0.17</strong>
             <ul>
                 <li>Disable indexing while updating IntelliJ module dependencies.</li>
@@ -140,7 +144,7 @@
             </ul>
         </p>]]>
     </change-notes>
-    <version>1.0.17</version>
+    <version>1.0.18</version>
     <vendor email="GadeSoftware@gmail.com">Jacob Gade</vendor>
     <idea-version since-build="3000"/>
     <application-components>
