@@ -17,7 +17,7 @@
 package org.clarent.ivyidea.intellij.task;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -30,26 +30,25 @@ import org.clarent.ivyidea.config.IvyIdeaConfigHelper;
 public abstract class IvyIdeaBackgroundTask extends Task.Backgroundable {
 
     private static class IvyIdeaPerformInBackgroundOption implements PerformInBackgroundOption {
-        private Project project;
+        private final Project project;
 
         public IvyIdeaPerformInBackgroundOption(Project project) {
             this.project = project;
         }
 
+        @Override
         public boolean shouldStartInBackground() {
             return IvyIdeaConfigHelper.getResolveInBackground(project);
         }
 
+        @Override
         public void processSentToBackground() {
         }
+    }
 
-        public void processRestoredToForeground() {
-        }
-    };
-
-    public IvyIdeaBackgroundTask(AnActionEvent event) {
-        super(DataKeys.PROJECT.getData(event.getDataContext()),
+    protected IvyIdeaBackgroundTask(AnActionEvent event) {
+        super(event.getData(CommonDataKeys.PROJECT),
                 "IvyIDEA " + event.getPresentation().getText(),
-                true, new IvyIdeaPerformInBackgroundOption(DataKeys.PROJECT.getData(event.getDataContext())));
+                true, new IvyIdeaPerformInBackgroundOption(event.getData(CommonDataKeys.PROJECT)));
     }
 }

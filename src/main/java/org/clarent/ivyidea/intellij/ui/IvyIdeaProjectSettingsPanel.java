@@ -40,9 +40,6 @@ import static org.clarent.ivyidea.config.model.ArtifactTypeSettings.DependencyCa
  */
 
 public class IvyIdeaProjectSettingsPanel {
-
-    public static final String COMPONENT_NAME = "IvyIDEA.ProjectSettings";
-
     private boolean modified;
     private TextFieldWithBrowseButton txtIvySettingsFile;
     private JPanel projectSettingsPanel;
@@ -129,7 +126,7 @@ public class IvyIdeaProjectSettingsPanel {
         internalState.setAlwaysAttachJavadocs(autoAttachJavadocs.isSelected());
         internalState.setUseCustomIvySettings(useYourOwnIvySettingsRadioButton.isSelected());
         final PropertiesSettings propertiesSettings = new PropertiesSettings();
-        propertiesSettings.setPropertyFiles(getPropertiesFiles());
+        propertiesSettings.setPropertiesFiles(getPropertiesFiles());
         internalState.setPropertiesSettings(propertiesSettings);
         internalState.setLibraryNameIncludesModule(includeModuleNameCheckBox.isSelected());
         internalState.setLibraryNameIncludesConfiguration(includeConfigurationNameCheckBox.isSelected());
@@ -153,7 +150,7 @@ public class IvyIdeaProjectSettingsPanel {
         autoAttachSources.setSelected(config.isAlwaysAttachSources());
         autoAttachJavadocs.setSelected(config.isAlwaysAttachJavadocs());
         useYourOwnIvySettingsRadioButton.setSelected(config.isUseCustomIvySettings());
-        setPropertiesFiles(config.getPropertiesSettings().getPropertyFiles());
+        setPropertiesFiles(config.getPropertiesSettings().getPropertiesFiles());
         includeModuleNameCheckBox.setSelected(config.isLibraryNameIncludesModule());
         includeConfigurationNameCheckBox.setSelected(config.isLibraryNameIncludesConfiguration());
         ivyLogLevelComboBox.setSelectedItem(IvyLogLevel.fromName(config.getIvyLogLevelThreshold()));

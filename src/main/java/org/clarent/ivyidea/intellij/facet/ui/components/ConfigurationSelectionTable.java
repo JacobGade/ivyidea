@@ -18,8 +18,9 @@ package org.clarent.ivyidea.intellij.facet.ui.components;
 
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
 import org.apache.ivy.core.module.descriptor.Configuration;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -36,7 +37,7 @@ import java.util.Set;
  * @author Guy Mahieu
  */
 
-public class ConfigurationSelectionTable extends Table {
+public class ConfigurationSelectionTable extends JBTable {
 
     private boolean editable = true;
 
@@ -45,7 +46,8 @@ public class ConfigurationSelectionTable extends Table {
         initComponents();
     }
 
-    public void setModel(TableModel dataModel) {
+    @Override
+    public void setModel(@NotNull TableModel dataModel) {
         super.setModel(dataModel);
         ((ConfigurationSelectionTableModel) dataModel).setEditable(editable);
         initComponents();

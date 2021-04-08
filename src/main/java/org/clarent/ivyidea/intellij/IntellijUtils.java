@@ -56,18 +56,9 @@ public class IntellijUtils {
         return module != null && FacetManager.getInstance(module).getFacetByType(IvyIdeaFacetType.ID) != null;
     }
 
-    @NotNull
-    public static FileType getXmlFileType() {
-        return FileTypeManager.getInstance().getFileTypeByExtension("xml");
-    }
-
-
     public static ConsoleView getConsoleView(Project project) {
-        return project.getComponent(ToolWindowRegistrationComponent.class).getConsole();
-    }
-
-    public static ToolWindow getToolWindow(Project project) {
-        return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowRegistrationComponent.TOOLWINDOW_ID);
+        final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("IvyIDEA");
+        return IvyIdeaToolWindowFactory.getConsole(toolWindow);
     }
 
     public static String getRelativePathIfInProjectFolder(ComponentManager project, String path){

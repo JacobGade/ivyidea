@@ -19,7 +19,7 @@ package org.clarent.ivyidea;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -53,7 +53,7 @@ public class ResolveForActiveModuleAction extends AbstractResolveAction {
     public void actionPerformed(final AnActionEvent e) {
         FileDocumentManager.getInstance().saveAllDocuments();
 
-        final Module module = DataKeys.MODULE.getData(e.getDataContext());
+        final Module module = e.getData(DataKey.create("module"));
         if (module != null) {
             ProgressManager.getInstance().run(new IvyIdeaResolveBackgroundTask(module.getProject(), e) {
                 public void doResolve(@NotNull ProgressIndicator progressIndicator) throws IvySettingsNotFoundException, IvyFileReadException, IvySettingsFileReadException {
@@ -105,7 +105,7 @@ public class ResolveForActiveModuleAction extends AbstractResolveAction {
     }
 
     public void update(AnActionEvent e) {
-        final Module activeModule = DataKeys.MODULE.getData(e.getDataContext());
+        final Module activeModule = e.getData(DataKey.create("module"));
         updatePresentation(e.getPresentation(), activeModule);
     }
 

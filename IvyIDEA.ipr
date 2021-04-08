@@ -62,6 +62,16 @@
   <component name="InspectionProjectProfileManager">
     <profile version="1.0">
       <option name="myName" value="Project Default" />
+      <inspection_tool class="FieldCanBeLocal" enabled="true" level="WARNING" enabled_by_default="true">
+        <option name="EXCLUDE_ANNOS">
+          <value>
+            <list size="1">
+              <item index="0" class="java.lang.String" itemvalue="com.intellij.util.xmlb.annotations.Attribute" />
+            </list>
+          </value>
+        </option>
+        <option name="IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS" value="true" />
+      </inspection_tool>
     </profile>
     <version value="1.0" />
   </component>
@@ -75,21 +85,7 @@
     </option>
   </component>
   <component name="JavadocGenerationManager">
-    <option name="OUTPUT_DIRECTORY" />
-    <option name="OPTION_SCOPE" value="protected" />
-    <option name="OPTION_HIERARCHY" value="true" />
-    <option name="OPTION_NAVIGATOR" value="true" />
-    <option name="OPTION_INDEX" value="true" />
-    <option name="OPTION_SEPARATE_INDEX" value="true" />
-    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
-    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
-    <option name="OPTION_DEPRECATED_LIST" value="true" />
     <option name="OTHER_OPTIONS" value="" />
-    <option name="HEAP_SIZE" />
-    <option name="LOCALE" />
-    <option name="OPEN_IN_BROWSER" value="true" />
   </component>
   <component name="Palette2">
     <group name="Swing">
@@ -248,7 +244,7 @@
       <module fileurl="file://$PROJECT_DIR$/IvyIDEA.iml" filepath="$PROJECT_DIR$/IvyIDEA.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" default="false" project-jdk-name="IntelliJ IDEA" project-jdk-type="IDEA JDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="IntelliJ IDEA IU-211.6693.111" project-jdk-type="IDEA JDK">
     <output url="file://$PROJECT_DIR$/target" />
   </component>
   <component name="ResourceManagerContainer">

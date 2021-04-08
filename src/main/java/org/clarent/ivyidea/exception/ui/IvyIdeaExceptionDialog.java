@@ -58,8 +58,6 @@ public class IvyIdeaExceptionDialog extends DialogWrapper {
     public IvyIdeaExceptionDialog(Project project) {
         super(project, false);
 
-        setButtonsAlignment(SwingConstants.CENTER);
-
         // By default we do not show a link
         lblLink.setVisible(false);
 
@@ -79,18 +77,18 @@ public class IvyIdeaExceptionDialog extends DialogWrapper {
     }
 
     public void setMessageFromThrowable(@NotNull Throwable exception) {
-        String message = exception.getMessage() + '\n';
+        StringBuilder message = new StringBuilder(exception.getMessage() + '\n');
         Throwable cause = exception.getCause();
         int maxDepth = 20;
         int currDepth = 0;
         while (currDepth++ <= maxDepth && cause != null) {
-            message += "\nCaused by: " + cause.getMessage();
+            message.append("\nCaused by: ").append(cause.getMessage());
             cause = cause.getCause();
         }
         if (cause != null) {
-            message += "\nMore causes skipped.";
+            message.append("\nMore causes skipped.");
         }
-        setMessage(message);
+        setMessage(message.toString());
     }
 
     public void setLinkBehavior(@Nullable LinkBehavior linkBehavior) {
@@ -109,6 +107,7 @@ public class IvyIdeaExceptionDialog extends DialogWrapper {
         return rootPanel;
     }
 
+    @NotNull
     @Override
     protected Action[] createActions() {
         return new Action[]{getOKAction()};

@@ -85,8 +85,6 @@ abstract class AbstractResolveAction extends AnAction {
                 consoleView.print(sb.toString(), ConsoleViewContentType.ERROR_OUTPUT);
                 if(consoleView instanceof ConsoleViewImpl)
                     ((ConsoleViewImpl)consoleView).flushDeferredText();
-                // Make sure the toolwindow becomes visible if there were problems
-                IntellijUtils.getToolWindow(module.getProject()).show(null);
             }
         });
     }

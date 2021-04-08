@@ -20,7 +20,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import org.clarent.ivyidea.config.ui.orderedfilelist.OrderedFileList;
 import org.clarent.ivyidea.config.ui.propertieseditor.PropertiesEditor;
@@ -60,11 +59,7 @@ public class PropertiesSettingsTab extends FacetEditorTab  {
 
     private void wireActivityWatcher() {
         UserActivityWatcher watcher = new UserActivityWatcher();
-        watcher.addUserActivityListener(new UserActivityListener() {
-            public void stateChanged() {
-                modified = true;
-            }
-        });
+        watcher.addUserActivityListener(() -> modified = true);
         watcher.register(pnlRoot);
     }
 
@@ -93,7 +88,7 @@ public class PropertiesSettingsTab extends FacetEditorTab  {
         final Facet facet = editorContext.getFacet();
         if (facet != null) {
             IvyIdeaFacetConfiguration configuration = (IvyIdeaFacetConfiguration) facet.getConfiguration();
-            configuration.getPropertiesSettings().setPropertyFiles(orderedFileList.getFileNames());
+            configuration.getPropertiesSettings().setPropertiesFiles(orderedFileList.getFileNames());
         }        
     }
 
@@ -107,7 +102,7 @@ public class PropertiesSettingsTab extends FacetEditorTab  {
         final Facet facet = editorContext.getFacet();
         if (facet != null) {
             IvyIdeaFacetConfiguration configuration = (IvyIdeaFacetConfiguration) facet.getConfiguration();
-            orderedFileList.setFileNames(configuration.getPropertiesSettings().getPropertyFiles());
+            orderedFileList.setFileNames(configuration.getPropertiesSettings().getPropertiesFiles());
         }        
     }
 

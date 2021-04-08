@@ -16,7 +16,6 @@
 
 package org.clarent.ivyidea.config.ui.orderedfilelist;
 
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -47,7 +46,7 @@ public class OrderedFileList {
     private JButton btnRemove;
     private JButton btnDown;
     private JButton btnAdd;
-    private JList lstFileNames;
+    private JList<String> lstFileNames;
     private boolean modified;
 
     public OrderedFileList(Project project) {
@@ -66,11 +65,7 @@ public class OrderedFileList {
 
     private void installActivityListener() {
         UserActivityWatcher watcher = new UserActivityWatcher();
-        watcher.addUserActivityListener(new UserActivityListener() {
-            public void stateChanged() {
-                modified = true;
-            }
-        });
+        watcher.addUserActivityListener(() -> modified = true);
         watcher.register(pnlRoot);
     }
 
@@ -78,11 +73,7 @@ public class OrderedFileList {
         lstFileNames.setModel(new OrderedFileListModel());
         // TODO: implement multi select
         lstFileNames.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        lstFileNames.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent e) {
-                updateButtonStates();
-            }
-        });
+        lstFileNames.getSelectionModel().addListSelectionListener(e -> updateButtonStates());
         lstFileNames.getModel().addListDataListener(new ListDataListener() {
             public void intervalAdded(ListDataEvent e) {
                 updateButtonStates();
@@ -133,40 +124,26 @@ public class OrderedFileList {
     }
 
     private void wireAddButton() {
-        btnAdd.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                final FileChooserDescriptor fcDescriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor();
-                fcDescriptor.setTitle("Select properties file(s)");
-                final VirtualFile[] files = IntellijCompatibilityService.getCompatibilityMethods().chooseFiles(fcDescriptor, pnlRoot, project, null);
-                for (VirtualFile file : files) {
-                    addFilenameToList(IntellijUtils.getRelativePathIfInProjectFolder(project, file.getPresentableUrl()));
-                }
+        btnAdd.addActionListener(e -> {
+            final FileChooserDescriptor fcDescriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor();
+            fcDescriptor.setTitle("Select properties file(s)");
+            final VirtualFile[] files = IntellijCompatibilityService.getCompatibilityMethods().chooseFiles(fcDescriptor, pnlRoot, project, null);
+            for (VirtualFile file : files) {
+                addFilenameToList(IntellijUtils.getRelativePathIfInProjectFolder(project, file.getPresentableUrl()));
             }
         });
     }
 
     private void wireRemoveButton() {
-        btnRemove.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                removeSelectedItemFromList();
-            }
-        });
+        btnRemove.addActionListener(e -> removeSelectedItemFromList());
     }
 
     private void wireMoveUpButton() {
-        btnUp.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                moveSelectedItemUp();
-            }
-        });
+        btnUp.addActionListener(e -> moveSelectedItemUp());
     }
 
     private void wireMoveDownButton() {
-        btnDown.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                moveSelectedItemDown();
-            }
-        });
+        btnDown.addActionListener(e -> moveSelectedItemDown());
     }
 
     private void addFilenameToList(String fileName) {

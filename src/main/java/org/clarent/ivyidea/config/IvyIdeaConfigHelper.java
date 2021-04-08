@@ -20,16 +20,14 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.util.net.HttpConfigurable;
 import org.apache.ivy.core.resolve.ResolveOptions;
-import org.apache.ivy.core.settings.IvySettings;
 import org.clarent.ivyidea.config.model.ArtifactTypeSettings;
 import org.clarent.ivyidea.config.model.IvyIdeaProjectSettings;
 import org.clarent.ivyidea.exception.IvySettingsFileReadException;
 import org.clarent.ivyidea.exception.IvySettingsNotFoundException;
-import org.clarent.ivyidea.intellij.facet.config.FacetPropertiesSettings;
+import org.clarent.ivyidea.intellij.IvyIdeaProjectConfigurationService;
+import org.clarent.ivyidea.intellij.facet.config.propertiesSettings;
 import org.clarent.ivyidea.intellij.facet.config.IvyIdeaFacetConfiguration;
-import org.clarent.ivyidea.intellij.IvyIdeaProjectComponent;
 import org.clarent.ivyidea.logging.IvyLogLevel;
 import org.clarent.ivyidea.util.CollectionUtils;
 import org.clarent.ivyidea.util.StringUtils;
@@ -39,8 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
-import java.text.ParseException;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -103,7 +100,7 @@ public class IvyIdeaConfigHelper {
     }
 
     public static List<String> getPropertiesFiles(Project project) {
-         return getProjectConfig(project).getPropertiesSettings().getPropertyFiles();
+         return getProjectConfig(project).getPropertiesSettings().getPropertiesFiles();
     }
 
     public static boolean isLibraryNameIncludesModule(final Project project) {
@@ -133,7 +130,7 @@ public class IvyIdeaConfigHelper {
 
     @NotNull
     private static IvyIdeaProjectSettings getProjectConfig(Project project) {
-        IvyIdeaProjectComponent component = project.getComponent(IvyIdeaProjectComponent.class);
+        IvyIdeaProjectConfigurationService component = project.getService(IvyIdeaProjectConfigurationService.class);
         return component.getState();
     }
 
@@ -174,7 +171,7 @@ public class IvyIdeaConfigHelper {
 
     @Nullable
     public static String getProjectIvySettingsFile(Project project) throws IvySettingsNotFoundException {
-        IvyIdeaProjectComponent component = project.getComponent(IvyIdeaProjectComponent.class);
+        IvyIdeaProjectConfigurationService component = project.getService(IvyIdeaProjectConfigurationService.class);
         final IvyIdeaProjectSettings state = component.getState();
         if (state.isUseCustomIvySettings()) {
             String settingsFile = StringUtils.trim(state.getIvySettingsFile());
@@ -203,11 +200,11 @@ public class IvyIdeaConfigHelper {
     @NotNull
     public static Properties getIvyProperties(Module module) throws IvySettingsNotFoundException, IvySettingsFileReadException {
         final IvyIdeaFacetConfiguration moduleConfiguration = getModuleConfiguration(module);
-        final List<String> propertiesFiles = new ArrayList<String>();
-        propertiesFiles.addAll(moduleConfiguration.getPropertiesSettings().getPropertyFiles());
-        final FacetPropertiesSettings modulePropertiesSettings = moduleConfiguration.getPropertiesSettings();
+        final List<String> propertiesFiles = new ArrayList<>();
+        propertiesFiles.addAll(moduleConfiguration.getPropertiesSettings().getPropertiesFiles());
+        final propertiesSettings modulePropertiesSettings = moduleConfiguration.getPropertiesSettings();
         if (modulePropertiesSettings.isIncludeProjectLevelPropertiesFiles()) {
-            propertiesFiles.addAll(getProjectConfig(module.getProject()).getPropertiesSettings().getPropertyFiles());
+            propertiesFiles.addAll(getProjectConfig(module.getProject()).getPropertiesSettings().getPropertiesFiles());
         }
         return loadProperties(module, propertiesFiles);
     }
@@ -219,12 +216,14 @@ public class IvyIdeaConfigHelper {
         final Properties properties = new Properties();
         for (String propertiesFile : CollectionUtils.createReversedList(propertiesFiles)) {
             if (propertiesFile != null) {
+                propertiesFile = PathMacroManager.getInstance(module.getProject()).expandPath(propertiesFile);
+                propertiesFile = PathMacroManager.getInstance(module).expandPath(propertiesFile);
                 File result = new File(propertiesFile);
                 if (!result.exists()) {
                     throw new IvySettingsNotFoundException("The ivy properties file given in the module settings for module " + module.getName() + " does not exist: " + result.getAbsolutePath(), IvySettingsNotFoundException.ConfigLocation.Module, module.getName());
                 }
-                try {
-                    properties.load(new FileInputStream(result));
+                try (InputStream inputStream = new FileInputStream(result)){
+                    properties.load(inputStream);
                 } catch (IOException e) {
                     throw new IvySettingsFileReadException(result.getAbsolutePath(), module.getName(), e);
                 }

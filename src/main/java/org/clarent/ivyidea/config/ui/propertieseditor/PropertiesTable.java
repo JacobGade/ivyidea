@@ -16,7 +16,8 @@
 
 package org.clarent.ivyidea.config.ui.propertieseditor;
 
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.TableModel;
 
@@ -26,14 +27,15 @@ import javax.swing.table.TableModel;
  *
  * @author Guy Mahieu
  */
-public class PropertiesTable extends Table {
+public class PropertiesTable extends JBTable {
 
     public PropertiesTable() {
         super(new PropertiesTableModel());
         initComponents();
     }
 
-    public void setModel(TableModel dataModel) {
+    @Override
+    public void setModel(@NotNull TableModel dataModel) {
         super.setModel(dataModel);
         initComponents();
     }

@@ -19,7 +19,7 @@ package org.clarent.ivyidea;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -51,7 +51,7 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
     public void actionPerformed(AnActionEvent e) {
         FileDocumentManager.getInstance().saveAllDocuments();
 
-        final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = e.getData(CommonDataKeys.PROJECT);
         ProgressManager.getInstance().run(new IvyIdeaResolveBackgroundTask(project, e) {
             public void doResolve(final @NotNull ProgressIndicator indicator) throws IvySettingsNotFoundException, IvyFileReadException, IvySettingsFileReadException {
                 ConsoleView consoleView = IntellijUtils.getConsoleView(project);

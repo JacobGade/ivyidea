@@ -16,19 +16,13 @@
 
 package org.clarent.ivyidea.intellij.ui;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.clarent.ivyidea.config.model.IvyIdeaProjectSettings;
-import org.clarent.ivyidea.intellij.IvyIdeaProjectComponent;
+import org.clarent.ivyidea.intellij.IvyIdeaProjectConfigurationService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,6 +40,7 @@ public class IvyIdeaProjectSettingsComponent implements Configurable {
         this.project = project;
     }
 
+    @Override
     @Nls
     public String getDisplayName() {
         return "IvyIDEA";
@@ -56,28 +51,32 @@ public class IvyIdeaProjectSettingsComponent implements Configurable {
         return IvyIdeaIcons.MAIN_ICON;
     }
 
+    @Override
     @Nullable
     @NonNls
     public String getHelpTopic() {
         return null;
     }
 
+    @Override
     public JComponent createComponent() {
         return getSettingsPanel().createComponent();
     }
 
     private IvyIdeaProjectSettingsPanel getSettingsPanel() {
         if (settingsPanel == null) {
-            IvyIdeaProjectSettings state = project.getComponent(IvyIdeaProjectComponent.class).getState();
+            IvyIdeaProjectSettings state = project.getService(IvyIdeaProjectConfigurationService.class).getState();
             settingsPanel = new IvyIdeaProjectSettingsPanel(project, state);
         }
         return settingsPanel;
     }
 
+    @Override
     public boolean isModified() {
         return getSettingsPanel().isModified();
     }
 
+    @Override
     public void apply() throws ConfigurationException {
         getSettingsPanel().apply();
     }

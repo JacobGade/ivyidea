@@ -16,6 +16,8 @@
 
 package org.clarent.ivyidea.config.model;
 
+import com.intellij.util.xmlb.annotations.XCollection;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,21 +25,16 @@ import java.util.List;
  * @author Guy Mahieu
  */
 public class PropertiesSettings {
-    
-    private List<String> propertyFiles = new ArrayList<String>();
 
-    public static PropertiesSettings copyDataFrom(PropertiesSettings propertiesSettings) {
-        PropertiesSettings result = new PropertiesSettings();
-        result.propertyFiles = new ArrayList<String>(propertiesSettings.propertyFiles);
-        return result;
+    @XCollection(elementName = "fileName",propertyElementName = "propertiesFiles", valueAttributeName = "")
+    private List<String> propertiesFiles = new ArrayList<>();
+
+    public List<String> getPropertiesFiles() {
+        return propertiesFiles;
     }
 
-    public List<String> getPropertyFiles() {
-        return propertyFiles;
-    }
-
-    public void setPropertyFiles(List<String> propertyFiles) {
-        this.propertyFiles = propertyFiles;
+    public void setPropertiesFiles(List<String> propertiesFiles) {
+        this.propertiesFiles = propertiesFiles;
     }
 
 }

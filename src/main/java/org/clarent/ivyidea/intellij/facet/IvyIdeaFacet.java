@@ -39,10 +39,4 @@ public class IvyIdeaFacet extends Facet<IvyIdeaFacetConfiguration> {
     public IvyIdeaFacet(@NotNull FacetType facetType, @NotNull Module module, String name, @NotNull IvyIdeaFacetConfiguration configuration, Facet underlyingFacet) {
         super(facetType, module, name, configuration, underlyingFacet);
     }
-
-    public IvyIdeaFacet(@NotNull Module module) {
-        this(FacetTypeRegistry.getInstance().findFacetType(IvyIdeaFacetType.ID), module, "IvyIdeaFacet", new IvyIdeaFacetConfiguration(), null);
-    }
-
-
 }
