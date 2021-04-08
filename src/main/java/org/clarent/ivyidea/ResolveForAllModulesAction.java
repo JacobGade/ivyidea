@@ -120,7 +120,7 @@ public class ResolveForAllModulesAction extends AbstractResolveAction {
                 indicator.setText("Updating IntelliJ modules with resolved dependencies");
                 indicator.setText2("");
                 indicator.setIndeterminate(true);
-                updateIntellijModel(project, packages.toArray(new DependencyResolutionPackage[0]));
+                updateIntellijModel(project, indicator, packages.toArray(new DependencyResolutionPackage[0]));
                 consoleView.print("Total time spent updating dependencies: " + getDurationText(dependencyStartTime, System.nanoTime()) + "\n" +
                                   "Total time: " + getDurationText(startTime, System.nanoTime()) + "\n",
                                   ConsoleViewContentType.NORMAL_OUTPUT);

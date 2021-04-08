@@ -22,6 +22,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.clarent.ivyidea.intellij.IntellijUtils;
@@ -38,25 +39,37 @@ import java.util.Set;
  * @author Guy Mahieu
  */
 abstract class AbstractResolveAction extends AnAction {
-    private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+    private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
-    void updateIntellijModel(final Project project, final DependencyResolutionPackage... packages) {
+    void updateIntellijModel(final Project project,
+                             final ProgressIndicator progressIndicator,
+                             final DependencyResolutionPackage... packages) {
+        progressIndicator.setText("Updating IntelliJ modules with resolved dependencies");
+
+
         DumbService.getInstance(project)
                    .suspendIndexingAndRun("Updating IntelliJ module dependencies",
                                           () -> {
-                                              for (DependencyResolutionPackage drp : packages) {
-                                                  ApplicationManager.getApplication()
-                                                                    .invokeAndWait(() -> ApplicationManager.getApplication()
-                                                                                                           .runWriteAction(() -> {
-                                                                                                               try (IntellijModuleWrapper moduleWrapper = IntellijModuleWrapper
-                                                                                                                       .forModule(drp.getModule())) {
-                                                                                                                   moduleWrapper.updateDependencies(
-                                                                                                                           drp.getDependencies());
-                                                                                                               }
-                                                                                                           }));
+                                              for (int i = 0, packagesLength = packages.length; i < packagesLength; i++) {
+                                                  DependencyResolutionPackage drp = packages[i];
+                                                  progressIndicator.setText2("(" + i + "/" + packagesLength + ")");
+                                                  progressIndicator.setFraction(((double) i) / packagesLength);
+                                                  final Runnable updateDependencies = () -> {
+                                                      try (IntellijModuleWrapper moduleWrapper =
+                                                                   IntellijModuleWrapper.forModule(drp.getModule())) {
+                                                          moduleWrapper.updateDependencies(drp.getDependencies());
+                                                      }
+                                                  };
+                                                  runWriteAction(updateDependencies);
                                               }
                                           });
     }
+
+    private void runWriteAction(Runnable runnable) {
+        ApplicationManager.getApplication()
+                          .invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(runnable));
+    }
+
 
     void reportProblems(final Module module, final List<ResolveProblem> problems) {
         ApplicationManager.getApplication().invokeLater(() -> {
