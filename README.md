@@ -4,6 +4,10 @@ Fork of the project created by Guy Mahieu.
 
 Optimized for projects with a lot of modules, and with extra feedback regarding progress.
 
+<strong>1.0.20</strong>
+<ul>
+    <li>Fixed issue with NPE when retrieving the console window</li>
+</ul>
 <strong>1.0.19</strong>
 <ul>
     <li>Updated plugin to be compatible with IntelliJ 2021.1</li>

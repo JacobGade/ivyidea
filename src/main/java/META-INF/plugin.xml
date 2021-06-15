@@ -16,6 +16,10 @@
     </description>
     <change-notes><![CDATA[
         <p>
+            <strong>1.0.20</strong>
+            <ul>
+                <li>Fixed issue with NPE when retrieving the console window</li>
+            </ul>
             <strong>1.0.19</strong>
             <ul>
                 <li>Updated plugin to be compatible with IntelliJ 2021.1</li>
@@ -148,7 +152,7 @@
             </ul>
         </p>]]>
     </change-notes>
-    <version>1.0.19</version>
+    <version>1.0.20</version>
     <vendor email="GadeSoftware@gmail.com">Jacob Gade</vendor>
     <idea-version since-build="201.6668.113"/>
     <actions>

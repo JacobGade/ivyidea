@@ -58,10 +58,6 @@ public class ConsoleViewMessageLogger extends AbstractMessageLogger {
     }
 
     private void logToConsoleView(final String message, final ConsoleViewContentType contentType) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-                consoleView.print(message, contentType);
-            }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> consoleView.print(message, contentType));
     }
 }

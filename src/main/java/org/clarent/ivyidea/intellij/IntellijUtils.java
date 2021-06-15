@@ -58,7 +58,7 @@ public class IntellijUtils {
 
     public static ConsoleView getConsoleView(Project project) {
         final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("IvyIDEA");
-        return IvyIdeaToolWindowFactory.getConsole(toolWindow);
+        return IvyIdeaToolWindowFactory.getConsole(project, toolWindow);
     }
 
     public static String getRelativePathIfInProjectFolder(ComponentManager project, String path){
